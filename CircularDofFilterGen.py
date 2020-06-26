@@ -36,8 +36,14 @@ def generateFilter(lan, r, c, t):
         P = [[1.624835, -0.862325, 0.767583, 1.862321]]
     elif c == 2:
         P = [
-         [ 5.268909, -0.886528,  0.411259, -0.548794 ],
-         [ 1.558213, -1.960518,  0.513282, 4.561110  ]]
+         #[ 5.268909, -0.886528,  0.411259, -0.548794 ], # Original
+         #[ 1.558213, -1.960518,  0.513282, 4.561110  ]] # Original
+         # [ 3.268909, -1.186528,  0.711259, -0.848794 ], # Flat gaussian
+         # [ 0.558213, -1.960518,  1.913282, 3.661110  ]] # Flat gaussian
+         [ 3.268909, -0.886528,  0.411259, -0.548794 ], # Alex Radkov - Perfect circle with -t 0.4
+         [ 0.958213, -1.260518,  0.513282, 4.561110  ]] # Alex Radkov - Perfect circle with -t 0.4
+         #[ 5.6868281810, -1.8755934460, 1.061259,   -1.078794 ],  # Olli Niemitalo symmetrical with 0.4
+         #[ 0.0311853116, -3.0859247607, -0.201259, 449.268794 ]]  # Olli Niemitalo symmetrical with 0.4
     elif c == 3:
         P = [
          [ 5.043495, -2.176490, 1.621035, -2.105439  ],
@@ -105,7 +111,7 @@ def generateFilter(lan, r, c, t):
         printGlsl(r, finalKernels, componentWeights, offsets, scales)
                 
     # Visualize the kernel
-    shouldVisualize = False # Set to True to visuzlize
+    shouldVisualize = True # Set to True to visuzlize
     saveToFile = "kernel.png" # or None
     if not shouldVisualize: return
     
@@ -137,7 +143,7 @@ def generateFilter(lan, r, c, t):
             maxV = max(maxV, abs(realKernel[x][y]))
     maxV = 128 / maxV
 
-    pixelW = 8
+    pixelW = 2
     width = d * pixelW
     height = d * pixelW
     img = Image.new("RGB", (width, height))
@@ -145,8 +151,13 @@ def generateFilter(lan, r, c, t):
 
     for y in range(height):
         for x in range(width):
-            val = 128 + (int)(maxV * realKernel[(int)(x/pixelW)][(int)(y/pixelW)])
-            imgMap[x, y] = (val, val, val)
+            kVal = realKernel[(int)(x/pixelW)][(int)(y/pixelW)]
+            # if kVal < 0: kVal = kVal * 15
+            val = max(0, 128 + (int)(maxV * kVal))
+            if val >= 128 and val <= 129:
+                imgMap[x, y] = (128, 255, 128)
+            else:
+                imgMap[x, y] = (val if val < 240 else 0, val if val >= 128 else 0, val if val >= 128 else 0)
 
     if (saveToFile):
         img.save(saveToFile)
